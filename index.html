@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia Especial - El Reto</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #ff6b81;
+            --background-color: #f7f1f3;
+            --card-color: #ffffff;
+            --text-color: #2f3542;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-color);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        p {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .rules-list {
+            text-align: left;
+            margin-bottom: 30px;
+            background-color: #fff5f6;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .rules-list li {
+            margin-bottom: 10px;
+            list-style-type: none;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            background-color: #ff4757;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #timer {
+            font-size: 22px;
+            font-weight: bold;
+            color: #ff4757;
+            margin-bottom: 20px;
+            background: #ffe0e3;
+            padding: 10px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .question-box {
+            margin-top: 20px;
+        }
+
+        .input-answer {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            outline: none;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+
+        .input-answer:focus {
+            border-color: var(--primary-color);
+        }
+
+        .feedback {
+            font-size: 14px;
+            margin-bottom: 15px;
+            min-height: 20px;
+            font-weight: 600;
+        }
+
+        .error-text { color: #ff4757; }
+        .success-text { color: #2ed573; }
+
+        .progress-bar {
+            height: 6px;
+            background-color: #eee;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .prize-box {
+            background: linear-gradient(135deg, #ffe1e4 0%, #ffcbd1 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px dashed var(--primary-color);
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- PANTALLA 1: REGLAS -->
+        <div id="screen-rules">
+            <h1>¡Trivia del Destino! 💖</h1>
+            <p>Lee con atención antes de empezar:</p>
+            <ul class="rules-list">
+                <li>⏱️ <strong>Tienes 5 minutos:</strong> Para responder el test completo. Si el tiempo llega a 0, se reinicia y te cambiarán las preguntas por otras.</li>
+                <li>🎲 <strong>Son 5 preguntas:</strong> Se elegirán 5 preguntas al azar de nuestro historial. Si fallas el tiempo o reinicias, saldrán preguntas distintas.</li>
+                <li>✍️ <strong>Formato estricto:</strong> Escribe con cuidado, incluye el nombre "Fernanda o Andres" cuando se te pida o se tomará como mala.</li>
+                <li>💡 <strong>Pistas ocultas:</strong> Si te equivocas, la pista solo te dará una pequeña guía!</li>
+            </ul>
+            <button class="btn" onclick="startTrivia()">Empezar Reto</button>
+        </div>
+
+        <!-- PANTALLA 2: JUEGO ACTIVO -->
+        <div id="screen-game" class="hidden">
+            <div id="timer">05:00</div>
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            
+            <div class="question-box">
+                <h2 id="question-text">Cargando...</h2>
+                <p style="font-size: 13px; color: #747d8c; font-style: italic; margin-top: 5px;" id="question-note"></p>
+                <input type="text" id="input-answer" class="input-answer" placeholder="Escribe tu respuesta exacta..." autocomplete="off">
+                <div id="feedback" class="feedback"></div>
+                <button class="btn" id="btn-submit" onclick="checkAnswer()">Enviar</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 3: PREMIO FINAL -->
+        <div id="screen-prize" class="hidden">
+            <h1>¡Felicidades mi Amor! 🏆🎉</h1>
+            <p>Superaste el juego con las preguntas aleatorias bajo presión de tiempo.</p>
+            
+            <div class="prize-box">
+                <h3>🎁 TU PREMIO:</h3>
+                <p style="margin-top: 15px; font-weight: 600; font-size: 18px; color: #ff4757;">
+                    "Vale por una cena en tu lugar favorito + un día completo consentida por mí."
+                </p>
+                <p style="font-size: 12px; color: #747d8c; font-style: italic;">
+                    Tómale captura a esto para reclamarlo en nuestra cita. 😉
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Banco total de 8 preguntas
+        const allQuestions = [
+            {
+                q: "¿Qué día nos hablamos por primera vez?",
+                a: "12 de noviembre 2023",
+                hint: "Sucedió en el año 2023."
+            },
+            {
+                q: "¿Qué día fue nuestro primer beso?",
+                a: "9 enero 2024",
+                hint: "Sucedió en el año 2024."
+            },
+            {
+                q: "¿Qué día nos hicimos novios?",
+                a: "14 de febrero pero lo pasamos al 12 de febrero",
+                hint: "Involucra el cambio de planes entre dos fechas de febrero."
+            },
+            {
+                q: "¿Quién besó primero a quién?",
+                note: "Obligatorio: Pon el nombre de quién a quién.",
+                a: "Fernanda a andres",
+                hint: "Debes estructurarlo usando obligatoriamente ambos nombres propios."
+            },
+            {
+                q: "¿Quién dijo primero te amo?",
+                a: "Andres",
+                hint: "Es un solo nombre propio."
+            },
+            {
+                q: "¿En qué red social hablamos primero?",
+                a: "Instagram",
+                hint: "Es una aplicación móvil conocida."
+            },
+            {
+                q: "¿Cuándo fue la primera vez que te di flores?",
+                a: "15 de marzo 2024",
+                hint: "Sucedió en el año 2024."
+            },
+            {
+                q: "¿Qué día tuvimos a shark?",
+                a: "7 septiembre 2025",
+                hint: "Sucedió en el año 2025."
+            }
+        ];
+
+        let activeQuestions = []; // Aquí se guardarán solo las 5 seleccionadas
+        let currentQuestionIndex = 0;
+        let timeLeft = 300; 
+        let timerInterval = null;
+
+        function cleanText(text) {
+            return text
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .trim()
+                .replace(/\s+/g, ' ');
+        }
+
+        // Selecciona 5 preguntas al azar sin repetir
+        function setupRandomQuestions() {
+            let shuffled = [...allQuestions];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            // Tomamos solo las primeras 5 del arreglo mezclado
+            activeQuestions = shuffled.slice(0, 5);
+        }
+
+        function startTrivia() {
+            document.getElementById('screen-rules').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+            
+            setupRandomQuestions();
+            currentQuestionIndex = 0;
+            timeLeft = 300;
+            
+            showQuestion();
+            startTimer();
+            updateProgressBar();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                
+                document.getElementById('timer').innerText = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("⚠️ ¡Tiempo agotado! La trivia se reiniciará con un grupo de 5 preguntas distintas.");
+                    startTrivia(); 
+                }
+            }, 1000);
+        }
+
+        function showQuestion() {
+            const currentQuestion = activeQuestions[currentQuestionIndex];
+            document.getElementById('question-text').innerText = currentQuestion.q;
+            document.getElementById('question-note').innerText = currentQuestion.note ? currentQuestion.note : "";
+            document.getElementById('input-answer').value = "";
+            document.getElementById('feedback').innerText = "";
+            document.getElementById('input-answer').focus();
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById('input-answer').value;
+            const correctAnswer = activeQuestions[currentQuestionIndex].a;
+            const feedbackEl = document.getElementById('feedback');
+
+            if (cleanText(userAnswer) === cleanText(correctAnswer)) {
+                feedbackEl.className = "feedback success-text";
+                feedbackEl.innerText = "¡Correcto! ✨ Siguiente...";
+                
+                currentQuestionIndex++;
+                updateProgressBar();
+
+                if (currentQuestionIndex < activeQuestions.length) {
+                    setTimeout(showQuestion, 1000);
+                } else {
+                    clearInterval(timerInterval);
+                    setTimeout(showWinScreen, 1000);
+                }
+            } else {
+                feedbackEl.className = "feedback error-text";
+                feedbackEl.innerText = `❌ Incorrecto. Pista: ${activeQuestions[currentQuestionIndex].hint}`;
+            }
+        }
+
+        function updateProgressBar() {
+            const percent = (currentQuestionIndex / activeQuestions.length) * 100;
+            document.getElementById('progress-fill').style.width = `${percent}%`;
+        }
+
+        function showWinScreen() {
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-prize').classList.remove('hidden');
+            
+            let end = Date.now() + (4 * 1000);
+            (function frame() {
+                confetti({
+                    particleCount: 4,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#ff6b81', '#ff4757', '#ffffff']
+                });
+                confetti({
+                    particleCount: 4,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#ff6b81', '#ff4757', '#ffffff']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+
+        document.getElementById('input-answer').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+    </script>
+</body>
+</html>
